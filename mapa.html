@@ -25,7 +25,7 @@
         const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dWdod3Vxd3VzaWRkdGZhd3ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2Nzk2NjMsImV4cCI6MjA4MjI1NTY2M30.shuGvcz2fv_AxJEE2GHMYysf87e_ajwO1Ou5FDYokiU";
 
         // Conexión a Supabase
-        const supabase = _supabase.createClient(supabaseUrl, supabaseKey);
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         // 1. Inicializar el mapa centrado en Málaga
         const map = L.map('map').setView([36.7213, -4.4214], 14);
@@ -54,7 +54,7 @@
                     
                     if(lugar.location && lugar.location.coordinates) {
                         const [lng, lat] = lugar.location.coordinates; 
-                      
+
                         // GeoJSON es [Lon, Lat]
                         // Leaflet usa [Lat, Lon], así que los invertimos aquí
                         L.marker([lat, lng]).addTo(map)
