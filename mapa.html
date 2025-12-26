@@ -13,7 +13,7 @@
 <body>
 
     <h1>Mi Geoportal: Puntos de Interés en Málaga</h1>
-    <p style="text-align:center;">Datos cargados dinámicamente desde <b>Supabase (PostgreSQL + PostGIS)</b></p>
+    <p style="text-align:center;">Datos cargados desde <b>Supabase</b> (Usando SQL View)</p>
     
     <div id="map"></div>
 
@@ -24,47 +24,46 @@
         const supabaseUrl = "https://oxughwuqwusiddtfawzi.supabase.co"; 
         const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dWdod3Vxd3VzaWRkdGZhd3ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2Nzk2NjMsImV4cCI6MjA4MjI1NTY2M30.shuGvcz2fv_AxJEE2GHMYysf87e_ajwO1Ou5FDYokiU";
 
-        // Conexión a Supabase
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-        // 1. Inicializar el mapa centrado en Málaga
-        const map = L.map('map').setView([36.7213, -4.4214], 14);
-
-        // 2. Añadir capa base (OpenStreetMap)
+        const client = supabase.createClient(supabaseUrl, supabaseKey);
+        const map = L.map('map').setView([36.7213, -4.4214], 13);
+        
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
+            attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // 3. Función para descargar los puntos de la base de datos
         async function cargarPuntos() {
-            // Hacemos una consulta a la tabla 'places'
-            const { data, error } = await supabase
-                .from('places')
-                .select('name, description, location');
+            const { data, error } = await client
+                .from('places_view')
+                .select('*');
 
             if (error) {
-                console.error('Error cargando datos:', error);
-                alert('Error al conectar con Supabase. Revisa la consola (F12).');
+                console.error("ERROR:", error);
+                alert("Error cargando datos");
+                return;
             }
 
-            if (data) {
-                data.forEach(lugar => {
-                    // PostGIS devuelve la ubicación en formato GeoJSON
-                    // Formato esperado: {type: "Point", coordinates: [longitud, latitud]}
+            console.log("Datos limpios:", data);
+
+            data.forEach(lugar => {
+                if (lugar.location && lugar.location.coordinates) {
+                    const [lng, lat] = lugar.location.coordinates; // GeoJSON es [Lon, Lat]
                     
-                    if(lugar.location && lugar.location.coordinates) {
-                        const [lng, lat] = lugar.location.coordinates; 
+                    console.log(`Pintando ${lugar.name} en:`, lat, lng);
 
-                        // GeoJSON es [Lon, Lat]
-                        // Leaflet usa [Lat, Lon], así que los invertimos aquí
-                        L.marker([lat, lng]).addTo(map)
-                            .bindPopup(`<b>${lugar.name}</b><br>${lugar.description}`);
-                    }
-                });
-            }
+                    L.circleMarker([lat, lng], {
+                        radius: 12,
+                        fillColor: "#9b59b6",
+                        color: "#ffffff",
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    })
+                    .bindPopup(`<b>${lugar.name}</b><br>${lugar.description}`)
+                    .addTo(map);
+                }
+            });
         }
 
-        // Usamos la funcion
         cargarPuntos();
     </script>
 </body>
